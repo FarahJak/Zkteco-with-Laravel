@@ -93,7 +93,7 @@ class ZktecoController extends Controller
         foreach ($data as $key => $value) {
             $currentTimestamp = strtotime($value['timestamp']);
 
-            if ($previousTimestamp !== null && ($currentTimestamp - $previousTimestamp) < 120) {
+            if ($previousTimestamp !== null && ($currentTimestamp - $previousTimestamp) < 60) {
                 unset($data[$key]);
             } else {
                 $newArray[$key] = $value;
