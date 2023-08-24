@@ -1,55 +1,165 @@
-## About Zkteco with Laravel
+## About Zkteco
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Zkteco is a brand that manufactures biometric devices such as fingerprint scanners, facial recognition devices, and access control systems. 
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## About laravel Framework
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Laravel is a popular PHP framework used for web application development.
 
-## Learning Laravel
+## About Zkteco-with-Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+It is a demo project to integrate Zkteco devices with Laravel, in this project we use [raihanafroz/zkteco](https://github.com/raihanafroz/zkteco) package. It is a PHP library that provides an interface to communicate with Zkteco devices. It allows you to connect to the device, retrieve attendance logs, and perform other operations, such as:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- [Connecting to the ZKteco device](https://github.com/raihanafroz/zkteco#:~:text=Call%20ZKTeco%20methods-,Connect,-//%20%20%20%20connect%0A//%20%20%20%20this%20return).
+- [Enabling the ZKteco device.](https://github.com/raihanafroz/zkteco#:~:text=%2D%3Edisconnect()%3B-,Enable%20Device,-//%20%20%20%20enable%0A//%20%20%20%20this%20return).
+- [Getting the users](https://github.com/raihanafroz/zkteco#:~:text=%2D%3EsetTime()%3B-,Get%20Users,-//%20%20%20%20get%20User%0A//%20%20%20%20this).
+- [Getting the Attendance Log](https://github.com/raihanafroz/zkteco#:~:text=%2D%3EremoveUser()%3B-,Get%20Attendance%20Log,-//%20%20%20%20get%20attendance%20log).
 
-## Laravel Sponsors
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Project Idea
 
-### Premium Partners
+The Idea of this demo project is to calculate the Attendance Time for a specific user at specific date.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+## The steps to calculate the Attendance Time for a user:
 
-## Contributing
+### Main function:
+-  Step 1: Create a new instance of the Zkteco class.
+-  Step 2: Check if the connection to the device was successful. If not, return an error message.
+-  Step 3: Parse the specific date provided in the request and format it as 'Y-m-d'.
+-  Step 4: Filter the attendance data based on the specific date and user ID.
+-  Step 5: Compare And Remove Extra Attendance Records.
+-  Step 6: Check the number of attendance records found for the specified date.
+-  Step 7: Return the result.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```php
+use Rats\Zkteco\Lib\ZKTeco;
 
-## Code of Conduct
+public function calculateAttendanceTime(Request $request)
+{
+    // Step 1:
+    $zk = new Zkteco('192.168.1.19', 4370);
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    // Step 2:
+    if (!$zk->connect()) {
+        return 'Unable to connect to the device.';
+    }
 
-## Security Vulnerabilities
+    // Step 3:
+    $formattedSpecificDate = $this->changeDateFormat($request);
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    // Step 4:
+    $AttendanceRecordsAfterFiltering = $this->filterTheAttendanceData($zk, $request->userId, $formattedSpecificDate);
 
-## License
+    // Step 5:
+    $newAttendanceRecords = $this->removeExtraAttendanceRecords($AttendanceRecordsAfterFiltering);
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    // Step 6:
+    $result = $this->checkAttendanceRecordsCount($newAttendanceRecords);
+
+    // Step 7:
+    return $result;
+}
+```
+### Change Date Format function:
+
+```php
+use DateTime;
+
+public function changeDateFormat($request)
+{
+    $date = DateTime::createFromFormat('m/d/Y',  $request->specificDate);
+    $formattedSpecificDate = $date->format('Y-m-d');
+    return $formattedSpecificDate;
+}
+```
+
+### Filter The Attendance Data function:
+
+```php
+
+public function filterTheAttendanceData($zk, $userId, $formattedSpecificDate)
+{
+    $filteredRecords = array_filter(
+        $zk->getAttendance(),
+        function ($attendance) use ($userId, $formattedSpecificDate) {
+            $attendanceDate = date('Y-m-d', strtotime($attendance['timestamp']));
+            return $attendanceDate == $formattedSpecificDate && $attendance['id'] == $userId;
+        }
+    );
+    return $filteredRecords;
+}
+```
+
+### Remove Extra Attendance Records function:
+
+```php
+
+public function removeExtraAttendanceRecords($data)
+{
+
+    $newArray = [];
+    $previousTimestamp = null;
+
+    foreach ($data as $key => $value) {
+        $currentTimestamp = strtotime($value['timestamp']);
+
+        if ($previousTimestamp !== null && ($currentTimestamp - $previousTimestamp) < 120) {
+            unset($data[$key]);
+        } else {
+            $newArray[$key] = $value;
+        }
+
+        $previousTimestamp = $currentTimestamp;
+    }
+
+    return $newArray;
+}
+```
+
+### Check Attendance Records Count function:
+
+```php
+
+public function checkAttendanceRecordsCount($newAttendanceRecords)
+{
+    $count = count($newAttendanceRecords);
+
+    if ($count == 0) {
+        return 'No attendance found for the specified date.';
+    }
+    if ($count == 1) {
+        return 'Only one attendance found for the specified date.';
+    }
+    if ($count % 2 == 0 && $count >= 2) {
+        $result = $this->calculateTimeDifferencesForEachPair($newAttendanceRecords, $count);
+        return  "The attendance time for the requested user on the specified date is" . ' ' . $result . ' ' . "minutes";
+    }
+
+    return 'The number of attendance records found for the specified date is odd.';  // Return specific message for odd count
+}
+```
+
+### Calculate Time Differences For Each Pair function:
+
+```php
+
+public function calculateTimeDifferencesForEachPair($newAttendanceRecords, $count)
+{
+    sort($newAttendanceRecords);
+
+    for ($i = 0; $i < $count; $i += 2) {
+
+        $currentTimestamp = strtotime($newAttendanceRecords[$i]['timestamp']);
+        $nextTimestamp = strtotime($newAttendanceRecords[$i + 1]['timestamp']);
+
+        $timeDifference = round(($nextTimestamp - $currentTimestamp) / (60));
+
+        $timeDifferences[] = $timeDifference;
+    }
+
+    // Sum up all the time differences
+    $totalTimeDifference = array_sum($timeDifferences);
+
+    return $totalTimeDifference;
+}
+```
