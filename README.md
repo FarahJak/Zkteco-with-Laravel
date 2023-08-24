@@ -61,6 +61,7 @@ public function calculateAttendanceTime(Request $request)
 }
 ```
 ### Change Date Format function:
+With this function, we changed the date format from the format (m/d/Y) that we received in the request to the following format (Y-m-d), which corresponds to the date format of the attendance records in the fingerprint device.
 
 ```php
 use DateTime;
@@ -74,6 +75,7 @@ public function changeDateFormat($request)
 ```
 
 ### Filter The Attendance Data function:
+With this function, we filter the attendance records, to get the records for the specified employee at the specified date.
 
 ```php
 
@@ -91,6 +93,9 @@ public function filterTheAttendanceData($zk, $userId, $formattedSpecificDate)
 ```
 
 ### Remove Extra Attendance Records function:
+In practical life, it may happen that the device senses the employee's fingerprint more than once at a time. 
+Therefore, we need to compare the times of all fingerprints of the employee in one day, and delete the fingerprints 
+that have a time difference between them less than a minute, and this is what this function does.
 
 ```php
 
@@ -117,6 +122,9 @@ public function removeExtraAttendanceRecords($data)
 ```
 
 ### Check Attendance Records Count function:
+In this function, we will count the number of attendance records for the required employee and on the required date. 
+And we will take a certain action according to the number of records.
+And when the number of attendance records is even and greater than 2, here we will call the function responsible for calculating the time difference between attendance records.
 
 ```php
 
@@ -140,6 +148,9 @@ public function checkAttendanceRecordsCount($newAttendanceRecords)
 ```
 
 ### Calculate Time Differences For Each Pair function:
+We will take into account that the employee works in shifts. Therefore, he may have more than one attendance and departure records for the same day, so 
+we want to calculate the time difference between each two successive attendance records, and then add these times, 
+and thus we get the actual employee attendance time calculated in minutes.
 
 ```php
 
